@@ -28,7 +28,7 @@ function getIndices(distances, n){
 // Set up the d3 canvas
 function canvas(data){
     const margin = {top: 30, right: 20, bottom: 30, left: 50};
-    const width = 1000 - margin.left - margin.right;
+    const width = 800 - margin.left - margin.right;
     const height = 600 - margin.top - margin.bottom;
 
     const svg = d3.select("#scatterPlot")
@@ -54,22 +54,22 @@ function canvas(data){
 
     svg.append("g")
         .call(d3.axisLeft(yScale));
-    
-    return { svg, colorScale, xScale, yScale, width };
+
+    const tooltip = d3.select("body").append("div")
+                    .attr("class", "tooltip")
+                    .style("position", "absolute")
+                    .style("display", "none")
+                    .style("pointer-events", "none")
+                    .style("background-color", "rgba(0, 0, 0, 0.7)")
+                    .style("color", "white")
+                    .style("padding", "5px")
+                    .style("border-radius", "5px");
+
+    return { svg, colorScale, xScale, yScale, width, tooltip };
 }
 
 // Plot the points
-function plot(svg, data, xScale, yScale, colorScale, n) {
-    const tooltip = d3.select("body").append("div")
-                        .attr("class", "tooltip")
-                        .style("position", "absolute")
-                        .style("display", "none")
-                        .style("pointer-events", "none")
-                        .style("background-color", "rgba(0, 0, 0, 0.7)")
-                        .style("color", "white")
-                        .style("padding", "5px")
-                        .style("border-radius", "5px");
-
+function plot(svg, data, xScale, yScale, colorScale, n, tooltip) {
     svg.selectAll("circle")
         .data(data)
         .enter().append("circle")
@@ -86,27 +86,29 @@ function plot(svg, data, xScale, yScale, colorScale, n) {
                 .style("stroke-width", (d, i) => indices.includes(i) ? 2 : 0);    
                 
             
+            const numRows = Math.ceil(neighbor_imgs.length / 5);
             const rows = [];
-            for (let i = 0; i < neighbor_imgs.length; i += 5) {
-                const rowImages = neighbor_imgs.slice(i, i + 5);
+            for (let i = 0; i < numRows; i++) {
+                const rowImages = neighbor_imgs.slice(i * 5, (i + 1) * 5);
                 rows.push(rowImages);
             }
-            console.log(rows);
             
             tooltip.style("display", "block")
-                .style("left", "1000px")
-                .style("top", "0px")
+                .style("left", "850px")
+                .style("top", "80px")
                 .html(() => {
                     let html = `<p>point label: ${classes[d.label]} </p>
                                 <p> Image: </p>
-                                <img src="images/${d.file}" width="200" height="200">
+                                <img src="images/${d.file}" width="100" height="100">
                                 <p> Neighbors: </p>`;
                     for (const row of rows){
                         html += '<div style="display: flex;">';
                         for (const image of row) {
+                            const hasNon = image.includes('Non');
+                            const borderColor = hasNon ? 'red' : 'green';
                             html += `
                                 <div style="margin-right: 10px;">
-                                    <img src="images/${image}" width="200" height="200">
+                                    <img src="images/${image}" width="100" height="100" style="border: 2px solid ${borderColor};>
                                 </div>`;
                         }
                         html += '</div>';
@@ -141,7 +143,7 @@ function main() {
 
     d3.csv("annotations_file.csv").then(function(data) {
         data.forEach(parseData);
-        const { svg, colorScale, xScale, yScale, width } = canvas(data);
+        const { svg, colorScale, xScale, yScale, width, tooltip } = canvas(data);
 
         const zoom = d3.zoom()
             .scaleExtent([0.1, 10])
@@ -167,7 +169,8 @@ function main() {
 
         function updatePlot() {
             svg.selectAll("*").remove();
-            plot(svg, data, xScale, yScale, colorScale, n);
+            plot(svg, data, xScale, yScale, colorScale, n, tooltip);
+            tooltip.style("display", "none");
             displayLegend(svg, colorScale, width);
         }
 
