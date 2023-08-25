@@ -28,8 +28,8 @@ function getIndices(distances, n){
 // Set up the d3 canvas
 function canvas(data){
     const margin = {top: 30, right: 20, bottom: 30, left: 50};
-    const width = 1200 - margin.left - margin.right;
-    const height = 800 - margin.top - margin.bottom;
+    const width = 1000 - margin.left - margin.right;
+    const height = 600 - margin.top - margin.bottom;
 
     const svg = d3.select("#scatterPlot")
                     .append("svg")
@@ -80,21 +80,40 @@ function plot(svg, data, xScale, yScale, colorScale, n) {
         .on("click", (event, d) => {
             const distances = calcDistances(data, d);
             const indices = getIndices(distances, n);
+            const neighbor_imgs = indices.map(index => data[index].file);
             svg.selectAll("circle")
                 .style("stroke", (d, i) => indices.includes(i) ? "black" : "none")
-                .style("stroke-width", (d, i) => indices.includes(i) ? 2 : 0);            
+                .style("stroke-width", (d, i) => indices.includes(i) ? 2 : 0);    
+                
+            
+            const rows = [];
+            for (let i = 0; i < neighbor_imgs.length; i += 5) {
+                const rowImages = neighbor_imgs.slice(i, i + 5);
+                rows.push(rowImages);
+            }
+            console.log(rows);
             
             tooltip.style("display", "block")
-                .style("left", "1300px")
-                .style("top", "400px")
-                .html(`
-                    <p>point label: ${classes[d.label]}</p>
-                    <img src="images/${d.file}" width="200" height="200">`
-                    );
+                .style("left", "1000px")
+                .style("top", "0px")
+                .html(() => {
+                    let html = `<p>point label: ${classes[d.label]} </p>
+                                <p> Image: </p>
+                                <img src="images/${d.file}" width="200" height="200">
+                                <p> Neighbors: </p>`;
+                    for (const row of rows){
+                        html += '<div style="display: flex;">';
+                        for (const image of row) {
+                            html += `
+                                <div style="margin-right: 10px;">
+                                    <img src="images/${image}" width="200" height="200">
+                                </div>`;
+                        }
+                        html += '</div>';
+                    }
+                    return html;
+                });
         });
-        /*.on("mouseout", () => {            
-            tooltip.style("display", "none");
-        });*/
 }
 
 // Legend
@@ -142,7 +161,7 @@ function main() {
 
             svg.select(".x-axis")
                 .call(d3.axisBottom(newX));
-            svg.select(".y=axis")
+            svg.select(".y-axis")
                 .call(d3.axisLeft(newY));
         }
 
