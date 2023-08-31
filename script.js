@@ -97,18 +97,20 @@ function plot(svg, data, xScale, yScale, colorScale, n, tooltip) {
                 .style("left", "850px")
                 .style("top", "80px")
                 .html(() => {
-                    let html = `<p>point label: ${classes[d.label]} </p>
+                    let html = `<p>Label: ${classes[d.label]} </p>
                                 <p> Image: </p>
                                 <img src="images/${d.file}" width="100" height="100">
                                 <p> Neighbors: </p>`;
                     for (const row of rows){
+                        console.log(row);
                         html += '<div style="display: flex;">';
                         for (const image of row) {
+                            console.log(image);
                             const hasNon = image.includes('Non');
-                            const borderColor = hasNon ? 'red' : 'green';
+                            const borderColor = hasNon ? colorScale(0) : colorScale(1);
                             html += `
                                 <div style="margin-right: 10px;">
-                                    <img src="images/${image}" width="100" height="100" style="border: 2px solid ${borderColor};>
+                                    <img src="images/${image}" width="100" height="100" style="border: 2px solid ${borderColor}">
                                 </div>`;
                         }
                         html += '</div>';
